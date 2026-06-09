@@ -1,0 +1,54 @@
+pragma solidity ^0.8.0;
+
+interface IVERental {
+    enum Status {
+        Available,
+        Expired,
+        Rented_Out
+    }
+
+    error OnlyFactory();
+    error RentedOut();
+    error Expired();
+
+    event StatusChange(Status newStatus, uint256 timestamp);
+
+    /// === State modifiers === ///
+
+    function initialize(
+        address seller,
+        address paymentToken,
+        uint256 veNFT,
+        uint256 amount,
+        uint256 duration
+    ) external;
+
+    function buy() external;
+
+    function vote(
+        address[] calldata pools,
+        uint256[] calldata weights
+    ) external;
+
+    function reap() external;
+
+    function closeRental() external;
+
+    /// === View functions === ///
+
+    function factory() external view returns (address);
+
+    function escrow() external view returns (address);
+
+    function buyer() external view returns (address);
+
+    function seller() external view returns (address);
+
+    function currentEpoch() external view returns (uint256);
+
+    function expiryEpoch() external view returns (uint256);
+
+    function currentStatus() external view returns (Status);
+
+    function tokenId() external view returns (uint256);
+}
