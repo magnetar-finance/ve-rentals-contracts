@@ -5,15 +5,19 @@ import {BaseTransfer} from "./base/BaseTransfer.sol";
 import {IVERental} from "./interfaces/IVERental.sol";
 import {IVotingEscrow} from "./interfaces/IVotingEscrow.sol";
 import {Clones} from "@openzeppelin/contracts/proxy/Clones.sol";
+import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
 
-contract VERentalMarketplace is IVERentalMarketplace, BaseTransfer {
+contract VERentalMarketplace is IVERentalMarketplace, BaseTransfer, Ownable {
     address public rentalImpl;
     address public ve;
     address[] public allRentals;
 
     uint256 public nonce;
 
-    constructor(address _rentalImpl, address _ve) {
+    constructor(
+        address _rentalImpl,
+        address _ve
+    ) BaseTransfer() Ownable(msg.sender) {
         rentalImpl = _rentalImpl;
         ve = _ve;
     }
@@ -80,5 +84,17 @@ contract VERentalMarketplace is IVERentalMarketplace, BaseTransfer {
 
     function getAllRentals() external view returns (address[] memory) {
         return allRentals;
+    }
+
+    function withdrawAsset(
+        address asset,
+        address to,
+        uint256 amount
+    ) external onlyOwner {
+        if (asset == address(0)) {
+            _transferNative(to, amount);
+        } else {
+            _transferERC20(asset, to, amount);
+        }
     }
 }

@@ -38,11 +38,15 @@ interface IVERental {
 
     function factory() external view returns (address);
 
+    function price() external view returns (uint256);
+
     function escrow() external view returns (address);
 
     function buyer() external view returns (address);
 
     function seller() external view returns (address);
+
+    function lastVoteEpoch() external view returns (uint256);
 
     function currentEpoch() external view returns (uint256);
 
