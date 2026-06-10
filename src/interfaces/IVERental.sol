@@ -10,8 +10,21 @@ interface IVERental {
     error OnlyFactory();
     error RentedOut();
     error Expired();
+    error AlreadyInitialized();
+    error OnlyBuyer();
+    error AlreadyReaped();
+    error UnallowedOperation();
+    error StillRunning();
 
+    event Initialize(
+        address indexed seller,
+        address indexed paymentToken,
+        uint256 indexed tokenId,
+        uint256 amount,
+        uint256 duration
+    );
     event StatusChange(Status newStatus, uint256 timestamp);
+    event NewBuyer(address buyer);
 
     /// === State modifiers === ///
 
@@ -32,7 +45,7 @@ interface IVERental {
 
     function reap() external;
 
-    function closeRental() external;
+    function closeOutRental() external;
 
     /// === View functions === ///
 
@@ -55,4 +68,6 @@ interface IVERental {
     function currentStatus() external view returns (Status);
 
     function tokenId() external view returns (uint256);
+
+    function isReaped() external view returns (bool);
 }

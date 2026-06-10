@@ -49,7 +49,9 @@ contract VERentalEscrow is IVERentalEscrow, BaseTransfer {
         if (currentEpoch == lastVoteEpoch) revert OnlyNewEpoch();
         if (currentEpoch >= expiryEpoch) revert ExpiryEpoch();
 
-        uint256 multiplier = currentEpoch - lastVoteEpoch;
+        uint256 multiplier = lastVoteEpoch == 0
+            ? 1
+            : currentEpoch - lastVoteEpoch;
         uint256 rentDue = multiplier * IVERental(factory).price();
 
         _transferERC20(paymentToken, IVERental(factory).seller(), rentDue);
@@ -130,6 +132,10 @@ contract VERentalEscrow is IVERentalEscrow, BaseTransfer {
         address mgn = IVotingEscrow(IVERentalMarketplace(factory).ve()).token();
         // Get balance
         uint256 tokenBalance = IERC20(mgn).balanceOf(address(this));
+        // Update token balance if reward token is payment token
+        if (mgn == paymentToken) {
+            tokenBalance -= trackedPTBalance;
+        }
         // Buyer
         address buyer = IVERental(factory).buyer();
         // Send out reward
@@ -151,6 +157,10 @@ contract VERentalEscrow is IVERentalEscrow, BaseTransfer {
                 address reward = IReward(bribes[i]).rewards(j);
                 // Get balance
                 uint256 tokenBalance = IERC20(reward).balanceOf(address(this));
+                // Update token balance if reward token is payment token
+                if (reward == paymentToken) {
+                    tokenBalance -= trackedPTBalance;
+                }
                 // Buyer
                 address buyer = IVERental(factory).buyer();
                 // Send out reward
@@ -174,6 +184,10 @@ contract VERentalEscrow is IVERentalEscrow, BaseTransfer {
                 address reward = IReward(fees[i]).rewards(j);
                 // Get balance
                 uint256 tokenBalance = IERC20(reward).balanceOf(address(this));
+                // Update token balance if reward token is payment token
+                if (reward == paymentToken) {
+                    tokenBalance -= trackedPTBalance;
+                }
                 // Buyer
                 address buyer = IVERental(factory).buyer();
                 // Send out reward

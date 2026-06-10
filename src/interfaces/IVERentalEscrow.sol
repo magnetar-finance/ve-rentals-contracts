@@ -16,6 +16,8 @@ interface IVERentalEscrow {
         uint256[] calldata weights
     ) external;
 
+    function finalize() external;
+
     function tokenId() external view returns (uint256);
 
     function paymentToken() external view returns (address);
