@@ -11,7 +11,7 @@ interface IVERentalEscrow {
 
     function close() external;
 
-    function updateBalance() external;
+    function increaseTrackedBalance(uint256 amount) external;
 
     function delegateVote(
         address[] calldata pools,

@@ -26,7 +26,8 @@ contract VERentalMarketplace is IVERentalMarketplace, BaseTransfer, Ownable {
         uint256 tokenId,
         address paymentToken,
         uint256 price,
-        uint256 duration
+        uint256 duration,
+        uint256 rewardsCommission
     ) public returns (address rental) {
         address sender = msg.sender;
 
@@ -40,7 +41,8 @@ contract VERentalMarketplace is IVERentalMarketplace, BaseTransfer, Ownable {
             paymentToken,
             tokenId,
             price,
-            duration
+            duration,
+            rewardsCommission
         );
 
         address escrow = IVERental(rental).escrow();
@@ -48,14 +50,23 @@ contract VERentalMarketplace is IVERentalMarketplace, BaseTransfer, Ownable {
 
         allRentals.push(rental);
 
-        emit NewRental(rental, escrow, tokenId, paymentToken, price, duration);
+        emit NewRental(
+            rental,
+            escrow,
+            tokenId,
+            paymentToken,
+            price,
+            duration,
+            rewardsCommission
+        );
     }
 
     function createRentals(
         uint256[] memory tokenIds,
         address[] memory paymentTokens,
         uint256[] memory prices,
-        uint256[] memory durations
+        uint256[] memory durations,
+        uint256[] memory rewardsCommissions
     ) external returns (address[] memory rentals) {
         require(
             tokenIds.length == paymentTokens.length &&
@@ -70,13 +81,15 @@ contract VERentalMarketplace is IVERentalMarketplace, BaseTransfer, Ownable {
             uint256 tokenId = tokenIds[i];
             address paymentToken = paymentTokens[i];
             uint256 price = prices[i];
-            uint256 duration = durations[i];
+            uint256 duration = durations[i];            
+            uint256 rewardsCommission = rewardsCommissions[i];
 
             address rental = createRental(
                 tokenId,
                 paymentToken,
                 price,
-                duration
+                duration,
+                rewardsCommission
             );
             rentals[i] = rental;
         }

@@ -7,7 +7,8 @@ interface IVERentalMarketplace {
         uint256 indexed tokenId,
         address paymentToken,
         uint256 price,
-        uint256 duration
+        uint256 duration,
+        uint256 commission
     );
 
     /// === State modifiers === ///
@@ -15,14 +16,16 @@ interface IVERentalMarketplace {
         uint256 tokenId,
         address paymentToken,
         uint256 price,
-        uint256 duration
+        uint256 duration,
+        uint256 rewardsCommission
     ) external returns (address);
 
     function createRentals(
         uint256[] memory tokenIds,
         address[] memory paymentTokens,
         uint256[] memory prices,
-        uint256[] memory durations
+        uint256[] memory durations,
+        uint256[] memory rewardsCommissions
     ) external returns (address[] memory);
 
     function allRentals(uint256 index) external view returns (address);

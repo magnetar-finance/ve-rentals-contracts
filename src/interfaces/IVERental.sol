@@ -21,7 +21,8 @@ interface IVERental {
         address indexed paymentToken,
         uint256 indexed tokenId,
         uint256 amount,
-        uint256 duration
+        uint256 duration,
+        uint256 rewardsCommission
     );
     event StatusChange(Status newStatus, uint256 timestamp);
     event NewBuyer(address buyer);
@@ -30,11 +31,12 @@ interface IVERental {
     /// === State modifiers === ///
 
     function initialize(
-        address seller,
-        address paymentToken,
-        uint256 veNFT,
-        uint256 amount,
-        uint256 duration
+        address _seller,
+        address _paymentToken,
+        uint256 _veNFT,
+        uint256 _amount,
+        uint256 _duration,
+        uint256 _rewardsCommission
     ) external;
 
     function buy() external;
@@ -73,4 +75,6 @@ interface IVERental {
     function tokenId() external view returns (uint256);
 
     function isReaped() external view returns (bool);
+
+    function rewardsCommission() external view returns (uint256);
 }

@@ -5,6 +5,7 @@ import {IVERentalEscrow} from "./interfaces/IVERentalEscrow.sol";
 import {BaseTransfer} from "./base/BaseTransfer.sol";
 import {VERentalEscrow} from "./VERentalEscrow.sol";
 import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
+import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
 contract VERental is IVERental, BaseTransfer, Ownable {
     address public factory;
@@ -19,6 +20,8 @@ contract VERental is IVERental, BaseTransfer, Ownable {
     uint256 public price;
 
     uint256 public constant WEEK = 7 days;
+    uint256 public constant MAX_REWARDS_COMMISSION = 100; // 1%
+    uint256 public rewardsCommission;
 
     Status public currentStatus;
 
@@ -31,7 +34,8 @@ contract VERental is IVERental, BaseTransfer, Ownable {
         address _paymentToken,
         uint256 _veNFT,
         uint256 _amount,
-        uint256 _duration
+        uint256 _duration,
+        uint256 _rewardsCommission
     ) external {
         if (factory != address(0)) revert AlreadyInitialized();
         factory = msg.sender;
@@ -41,10 +45,23 @@ contract VERental is IVERental, BaseTransfer, Ownable {
 
         currentStatus = Status.Available;
         expiryEpoch = (block.timestamp + _duration) / WEEK;
+        rewardsCommission = _rewardsCommission;
+
+        require(
+            _rewardsCommission <= MAX_REWARDS_COMMISSION,
+            "Commission must be at most 1%"
+        );
 
         escrow = address(new VERentalEscrow(_paymentToken, _veNFT));
         _transferOwnership(_seller);
-        emit Initialize(_seller, _paymentToken, _veNFT, _amount, _duration);
+        emit Initialize(
+            _seller,
+            _paymentToken,
+            _veNFT,
+            _amount,
+            _duration,
+            _rewardsCommission
+        );
         emit StatusChange(currentStatus, block.timestamp);
     }
 
@@ -56,14 +73,17 @@ contract VERental is IVERental, BaseTransfer, Ownable {
 
         uint256 multiplier = expiryEpoch - nowEpoch;
 
+        address paymentToken = IVERentalEscrow(escrow).paymentToken();
+        uint256 balanceBefore = IERC20(paymentToken).balanceOf(escrow);
         _transferFromERC20(
-            IVERentalEscrow(escrow).paymentToken(),
+            paymentToken,
             msg.sender,
             escrow,
             multiplier * price
         );
+        uint256 balanceAfter = IERC20(paymentToken).balanceOf(escrow);
 
-        IVERentalEscrow(escrow).updateBalance();
+        IVERentalEscrow(escrow).increaseTrackedBalance(balanceAfter - balanceBefore);
 
         buyEpoch = nowEpoch;
         buyer = msg.sender;
@@ -84,25 +104,20 @@ contract VERental is IVERental, BaseTransfer, Ownable {
 
         IVERentalEscrow(escrow).delegateVote(pools, weights);
         lastVoteEpoch = currentEpoch();
-
-        IVERentalEscrow(escrow).updateBalance();
     }
 
     function reap() external {
         if (msg.sender != buyer) revert OnlyBuyer();
         if (isReaped) revert AlreadyReaped();
 
-        IVERentalEscrow(escrow).updateBalance(); // Update balance before claim so that escrow tracks balance before rewards
-
         IVERentalEscrow(escrow).claim();
         isReaped = true;
 
         if (currentStatus != Status.Expired) {
             currentStatus = Status.Expired;
+            emit StatusChange(currentStatus, block.timestamp);
         }
 
-        IVERentalEscrow(escrow).updateBalance(); // We need to update balance in case payment token is also a reward token and has been disbursed after calling `claim`
-        emit StatusChange(currentStatus, block.timestamp);
         emit Reaped();
     }
 

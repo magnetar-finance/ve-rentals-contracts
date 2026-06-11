@@ -4,10 +4,9 @@
 
 ## Overview
 
-This document outlines the findings of a comprehensive security audit conducted on the `ve-rentals-contracts` repository. The audit focused on identifying vulnerabilities, logic flaws, and potential exploitation vectors within the smart contract architecture.
+This document outlines the findings of a comprehensive security audit conducted on the `ve-rentals-contracts` repository. The audit focused on identifying vulnerabilities, logic flaws, and potential exploitation vectors within the smart contract architecture. Two complete passes were made over the codebase to ensure deep logical flaws were uncovered.
 
 **Scope of Audit:**
-
 - `src/VERental.sol`
 - `src/VERentalEscrow.sol`
 - `src/VERentalMarketplace.sol`
@@ -17,51 +16,56 @@ This document outlines the findings of a comprehensive security audit conducted 
 
 ## Executive Summary
 
-The initial audit revealed several Critical and High-severity vulnerabilities that could have led to the permanent locking of user assets (veNFTs), theft of voting power, denial of service (DoS) conditions during reward claiming, and unfair loss of rental yields.
+The audit revealed several Critical and High-severity vulnerabilities that could have led to the permanent locking of user assets (veNFTs), theft of voting power, theft of buyer rewards, denial of service (DoS) conditions during reward claiming, and unfair loss of rental yields.
 
-All identified vulnerabilities have been successfully remediated. The codebase has been updated with proper access controls, fail-safe mechanisms for asset recovery, and optimized gas usage for reward loops.
+All identified vulnerabilities have been successfully remediated. The codebase has been updated with strict mathematical accounting for balances, proper access controls, fail-safe mechanisms for asset recovery, and optimized gas usage for reward loops.
 
 ---
 
 ## Detailed Findings & Remediations
 
-### 1. Unprotected `vote()` Function (Critical)
+### 1. Reward-Stealing via `updateBalance()` (Critical)
+* **Description:** In `VERentalEscrow.sol`, `trackedPTBalance` was used to track unpaid rent. It was loosely synced to the total escrow balance using `updateBalance()`. If the rent payment token was the same as a reward token (e.g., USDC), and rewards were distributed to the escrow *before* the buyer called `reap()`, `updateBalance()` would absorb those rewards into the tracked rent. During `claim()`, subtracting the inflated `trackedPTBalance` resulted in `0` rewards for the buyer, effectively allowing the seller (or any external actor) to steal the buyer's rewards upon closure.
+* **Impact:** Complete loss of all rewards denominated in the payment token for the buyer.
+* **Remediation:** Removed the `updateBalance()` function entirely. Implemented strict mathematical accounting where `trackedPTBalance` is only increased in `buy()` by the exact deposited amount (calculated via `balanceAfter - balanceBefore` to also support fee-on-transfer tokens), and decreased in `delegateVote()` by exactly `rentDue`.
 
-- **Description:** The `VERental.vote()` function lacked access control. Any external actor could call it and dictate the voting weights and pools for the rented veNFT.
-- **Impact:** Complete theft of the voting utility that the buyer paid for.
-- **Remediation:** Implemented strict access control (`if (msg.sender != buyer) revert OnlyBuyer();`) ensuring only the legitimate buyer can cast votes during the active rental period.
+### 2. Unprotected `vote()` Function (Critical)
+* **Description:** The `VERental.vote()` function lacked access control. Any external actor could call it and dictate the voting weights and pools for the rented veNFT.
+* **Impact:** Complete theft of the voting utility that the buyer paid for.
+* **Remediation:** Implemented strict access control (`if (msg.sender != buyer) revert OnlyBuyer();`) ensuring only the legitimate buyer can cast votes during the active rental period.
 
-### 2. "Hostage" Scenario / Permanent NFT Lock (Critical)
+### 3. "Hostage" Scenario / Permanent NFT Lock (Critical)
+* **Description:** `VERental.closeOutRental()` rigidly required `isReaped` to be `true` before execution. Since `reap()` could only be called by the `buyer`, a malicious or negligent buyer could intentionally never call `reap()`, permanently locking the seller's veNFT in the escrow.
+* **Impact:** Permanent loss of the veNFT for the seller.
+* **Remediation:** Modified `closeOutRental()` to allow the seller or owner to forcefully close the rental once it expires (`currentEpoch() >= expiryEpoch`), regardless of the `isReaped` status.
 
-- **Description:** `VERental.closeOutRental()` rigidly required `isReaped` to be `true` before execution. Since `reap()` could only be called by the `buyer`, a malicious or negligent buyer could intentionally never call `reap()`, permanently locking the seller's veNFT in the escrow.
-- **Impact:** Permanent loss of the veNFT for the seller.
-- **Remediation:** Modified `closeOutRental()` to allow the seller or owner to forcefully close the rental once it expires (`currentEpoch() >= expiryEpoch`), regardless of the `isReaped` status.
+### 4. Zero-Amount Transfer Reverts Bricking `reap()` (Critical)
+* **Description:** `BaseTransfer._transferERC20` was strictly designed to revert if the transfer `amount == 0`. The reward claiming mechanism inside `VERentalEscrow` iterates over all historically registered reward tokens. If any of those tokens yielded 0 rewards for a given epoch, the entire `reap()` transaction would revert.
+* **Impact:** Permanent denial of service (DoS) for the `reap()` function, locking both rewards and the veNFT.
+* **Remediation:** Replaced the strict revert with an early return (`if (amount == 0) return;`) in `BaseTransfer.sol`, allowing the contract to gracefully skip empty reward distributions.
 
-### 3. Zero-Amount Transfer Reverts Bricking `reap()` (Critical)
-
-- **Description:** `BaseTransfer._transferERC20` was strictly designed to revert if the transfer `amount == 0`. The reward claiming mechanism inside `VERentalEscrow` iterates over all historically registered reward tokens. If any of those tokens yielded 0 rewards for a given epoch, the entire `reap()` transaction would revert.
-- **Impact:** Permanent denial of service (DoS) for the `reap()` function, locking both rewards and the veNFT.
-- **Remediation:** Replaced the strict revert with an early return (`if (amount == 0) return;`) in `BaseTransfer.sol`, allowing the contract to gracefully skip empty reward distributions.
-
-### 4. Loss of Rent for Initial Epochs (High)
-
-- **Description:** The rent calculation in `VERentalEscrow.delegateVote()` hardcoded the multiplier to `1` for the first vote. If a buyer waited several epochs before casting their first vote, the seller was never compensated for those elapsed epochs, and the unpaid rent was eventually refunded to the buyer.
-- **Impact:** Direct financial loss of rental yield for the seller.
-- **Remediation:**
+### 5. Loss of Rent for Initial Epochs (High)
+* **Description:** The rent calculation in `VERentalEscrow.delegateVote()` hardcoded the multiplier to `1` for the first vote. If a buyer waited several epochs before casting their first vote, the seller was never compensated for those elapsed epochs, and the unpaid rent was eventually refunded to the buyer.
+* **Impact:** Direct financial loss of rental yield for the seller.
+* **Remediation:** 
   1. Tracked the initial `buyEpoch` during the `buy()` transaction.
   2. Updated the first-vote multiplier to accurately calculate all elapsed epochs: `currentEpoch - buyEpoch + 1`.
   3. Updated `VERentalEscrow.close()` to ensure any remaining `trackedPTBalance` (unpaid rent) is sent to the **seller** instead of the buyer upon closure, guaranteeing full compensation for the rental duration.
 
-### 5. Gas Limit DoS via `votedPools` Bloating (High)
+### 6. Gas Limit DoS via `votedPools` Bloating (High)
+* **Description:** The `votedPools` array grew indefinitely as votes were cast for new pools. During `reap()`, the contract iterated over every single pool and its associated reward tokens. A large array would cause the transaction to exceed the block gas limit.
+* **Impact:** Out-of-gas reversion, permanently bricking the `reap()` function.
+* **Remediation:** Implemented a strict upper bound in `_trackPools()`, limiting the `votedPools` array to a maximum of 20 pools (`require(votedPools.length < 20, "Max pools reached");`).
 
-- **Description:** The `votedPools` array grew indefinitely as votes were cast for new pools. During `reap()`, the contract iterated over every single pool and its associated reward tokens. A large array would cause the transaction to exceed the block gas limit.
-- **Impact:** Out-of-gas reversion, permanently bricking the `reap()` function.
-- **Remediation:** Implemented a strict upper bound in `_trackPools()`, limiting the `votedPools` array to a maximum of 20 pools (`require(votedPools.length < 20, "Max pools reached");`).
+### 7. Compiler Hygiene and Best Practices (Low)
+* **Description:** The `onERC721Received` function in `VERentalEscrow.sol` was incorrectly missing the `pure` state mutability modifier despite not reading or writing state. It also triggered unused parameter warnings for its required interface arguments.
+* **Impact:** Minor code quality issue and gas inefficiency. Unaddressed warnings can obscure more critical compiler errors in the future.
+* **Remediation:** Added the `pure` modifier to signal no side effects and commented out the unused parameter names to silence compiler warnings while maintaining interface compliance.
 
 ---
 
 ## Conclusion
 
-The `ve-rentals-contracts` suite has been significantly hardened. The implemented fixes protect both buyers and sellers from grieving attacks, ensure accurate rent distribution, and secure the protocol against edge-case reverts and gas-limit exhaustion.
+The `ve-rentals-contracts` suite has been significantly hardened after a thorough two-pass audit. The implemented fixes protect both buyers and sellers from grieving attacks, ensure accurate rent distribution, implement safe mathematical accounting for rewards, and secure the protocol against edge-case reverts and gas-limit exhaustion.
 
-_Audit performed by Gemini 3.1 Pro._
+*Audit performed by Gemini 3.1 Pro.*
