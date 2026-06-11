@@ -89,9 +89,10 @@ contract VERentalEscrow is IVERentalEscrow, IERC721Receiver, BaseTransfer {
         require(!_isClosed, "Already closed");
 
         address seller = IVERental(factory).seller();
+        address buyer = IVERental(factory).buyer();
 
         if (trackedPTBalance > 0) {
-            _transferERC20(paymentToken, seller, trackedPTBalance);
+            _transferERC20(paymentToken, buyer, trackedPTBalance); // Send back remaining balance to buyer
             trackedPTBalance = 0;
         }
 
