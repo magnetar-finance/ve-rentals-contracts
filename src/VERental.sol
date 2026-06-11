@@ -100,6 +100,7 @@ contract VERental is IVERental, BaseTransfer, Ownable {
 
         IVERentalEscrow(escrow).updateBalance(); // We need to update balance in case payment token is also a reward token and has been disbursed after calling `claim`
         emit StatusChange(currentStatus, block.timestamp);
+        emit Reaped();
     }
 
     function closeOutRental() external {

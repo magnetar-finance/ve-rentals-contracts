@@ -25,6 +25,7 @@ interface IVERental {
     );
     event StatusChange(Status newStatus, uint256 timestamp);
     event NewBuyer(address buyer);
+    event Reaped();
 
     /// === State modifiers === ///
 
