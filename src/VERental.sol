@@ -96,7 +96,10 @@ contract VERental is IVERental, BaseTransfer, Ownable {
 
         IVERentalEscrow(escrow).claim();
         isReaped = true;
-        currentStatus = Status.Expired;
+
+        if (currentStatus != Status.Expired) {
+            currentStatus = Status.Expired;
+        }
 
         IVERentalEscrow(escrow).updateBalance(); // We need to update balance in case payment token is also a reward token and has been disbursed after calling `claim`
         emit StatusChange(currentStatus, block.timestamp);
@@ -109,9 +112,10 @@ contract VERental is IVERental, BaseTransfer, Ownable {
 
         uint256 nowEpoch = currentEpoch();
         if (nowEpoch < expiryEpoch) revert StillRunning();
-        if (currentStatus == Status.Expired) revert Expired();
 
-        currentStatus = Status.Expired;
+        if (currentStatus != Status.Expired) {
+            currentStatus = Status.Expired;
+        }
 
         IVERentalEscrow(escrow).close();
     }
