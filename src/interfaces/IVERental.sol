@@ -61,6 +61,8 @@ interface IVERental {
 
     function lastVoteEpoch() external view returns (uint256);
 
+    function buyEpoch() external view returns (uint256);
+
     function currentEpoch() external view returns (uint256);
 
     function expiryEpoch() external view returns (uint256);

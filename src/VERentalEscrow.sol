@@ -20,6 +20,8 @@ contract VERentalEscrow is IVERentalEscrow, BaseTransfer {
 
     IVoter public voter;
 
+    bool private _isClosed;
+
     constructor(address _paymentToken, uint256 _tokenId) BaseTransfer() {
         paymentToken = _paymentToken;
         tokenId = _tokenId;
@@ -49,8 +51,9 @@ contract VERentalEscrow is IVERentalEscrow, BaseTransfer {
         if (currentEpoch == lastVoteEpoch) revert OnlyNewEpoch();
         if (currentEpoch >= expiryEpoch) revert ExpiryEpoch();
 
+        uint256 buyEpoch = IVERental(factory).buyEpoch();
         uint256 multiplier = lastVoteEpoch == 0
-            ? 1
+            ? (currentEpoch >= buyEpoch ? currentEpoch - buyEpoch + 1 : 1)
             : currentEpoch - lastVoteEpoch;
         uint256 rentDue = multiplier * IVERental(factory).price();
 
@@ -72,6 +75,27 @@ contract VERentalEscrow is IVERentalEscrow, BaseTransfer {
         _releaseMGN();
         _releaseBribeRewards();
         _releaseFeeRewards();
+    }
+
+    function close() external {
+        if (msg.sender != factory) revert OnlyFactory();
+
+        require(!_isClosed, "Already closed");
+
+        address seller = IVERental(factory).seller();
+
+        if (trackedPTBalance > 0) {
+            _transferERC20(paymentToken, seller, trackedPTBalance);
+            trackedPTBalance = 0;
+        }
+
+        IVotingEscrow(IVERentalMarketplace(factory).ve()).safeTransferFrom(
+            address(this),
+            seller,
+            tokenId
+        );
+
+        _isClosed = true;
     }
 
     function _claimGaugeRewards() internal {
@@ -201,6 +225,7 @@ contract VERentalEscrow is IVERentalEscrow, BaseTransfer {
             if (_checkPoolTracked(_pools[i])) {
                 continue;
             }
+            require(votedPools.length < 20, "Max pools reached");
             votedPools.push(_pools[i]);
         }
     }

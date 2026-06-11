@@ -1,0 +1,6 @@
+{
+  "detectors_to_run": "all",
+  "printers_to_run": "human-summary,contract-summary",
+  "filter_paths": "node_modules",
+  "solc_remaps": ["@openzeppelin=lib/openzeppelin-contracts"]
+}

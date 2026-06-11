@@ -9,14 +9,14 @@ interface IVERentalEscrow {
 
     function claim() external;
 
+    function close() external;
+
     function updateBalance() external;
 
     function delegateVote(
         address[] calldata pools,
         uint256[] calldata weights
     ) external;
-
-    function finalize() external;
 
     function tokenId() external view returns (uint256);
 

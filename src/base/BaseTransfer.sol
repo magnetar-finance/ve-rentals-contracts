@@ -18,7 +18,7 @@ abstract contract BaseTransfer {
         if (tokenAddress == address(0)) revert ZeroAddress();
         if (to == address(0)) revert ZeroAddress();
         if (tokenAddress.code.length == 0) revert NotContract();
-        if (amount == 0) revert AmountIsZero();
+        if (amount == 0) return;
 
         IERC20(tokenAddress).safeTransfer(to, amount);
     }
@@ -33,14 +33,14 @@ abstract contract BaseTransfer {
         if (from == address(0)) revert ZeroAddress();
         if (to == address(0)) revert ZeroAddress();
         if (tokenAddress.code.length == 0) revert NotContract();
-        if (amount == 0) revert AmountIsZero();
+        if (amount == 0) return;
 
         IERC20(tokenAddress).safeTransferFrom(from, to, amount);
     }
 
     function _transferNative(address to, uint256 amount) internal {
         if (to == address(0)) revert ZeroAddress();
-        if (amount == 0) revert AmountIsZero();
+        if (amount == 0) return;
         (bool sent, ) = to.call{value: amount}("");
         require(sent, "Could not send out ether");
     }

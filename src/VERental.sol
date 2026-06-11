@@ -14,6 +14,7 @@ contract VERental is IVERental, BaseTransfer, Ownable {
 
     uint256 public lastVoteEpoch;
     uint256 public expiryEpoch;
+    uint256 public buyEpoch;
     uint256 public tokenId;
     uint256 public price;
 
@@ -56,7 +57,7 @@ contract VERental is IVERental, BaseTransfer, Ownable {
         uint256 multiplier = expiryEpoch - nowEpoch;
 
         _transferFromERC20(
-            paymentToken,
+            IVERentalEscrow(escrow).paymentToken(),
             msg.sender,
             escrow,
             multiplier * price
@@ -64,6 +65,7 @@ contract VERental is IVERental, BaseTransfer, Ownable {
 
         IVERentalEscrow(escrow).updateBalance();
 
+        buyEpoch = nowEpoch;
         buyer = msg.sender;
         currentStatus = Status.Rented_Out;
         emit StatusChange(currentStatus, block.timestamp);
@@ -74,6 +76,10 @@ contract VERental is IVERental, BaseTransfer, Ownable {
         address[] calldata pools,
         uint256[] calldata weights
     ) external {
+        if (msg.sender != buyer) revert OnlyBuyer();
+        uint256 nowEpoch = currentEpoch();
+
+        if (nowEpoch >= expiryEpoch) revert Expired();
         if (currentStatus == Status.Expired) revert Expired();
 
         IVERentalEscrow(escrow).delegateVote(pools, weights);
@@ -83,18 +89,17 @@ contract VERental is IVERental, BaseTransfer, Ownable {
     }
 
     function reap() external {
-        uint256 nowEpoch = currentEpoch();
-
         if (msg.sender != buyer) revert OnlyBuyer();
         if (isReaped) revert AlreadyReaped();
 
-        IVERentalEscrow(escrow).updateBalance(); // Update balance before claim
+        IVERentalEscrow(escrow).updateBalance(); // Update balance before claim so that escrow tracks balance before rewards
 
         IVERentalEscrow(escrow).claim();
         isReaped = true;
         currentStatus = Status.Expired;
 
         IVERentalEscrow(escrow).updateBalance(); // We need to update balance in case payment token is also a reward token and has been disbursed after calling `claim`
+        emit StatusChange(currentStatus, block.timestamp);
     }
 
     function closeOutRental() external {
@@ -103,9 +108,11 @@ contract VERental is IVERental, BaseTransfer, Ownable {
 
         uint256 nowEpoch = currentEpoch();
         if (nowEpoch < expiryEpoch) revert StillRunning();
-        if (currentStatus == Status.Expired && !isReaped) revert Expired();
+        if (currentStatus == Status.Expired) revert Expired();
 
         currentStatus = Status.Expired;
+
+        IVERentalEscrow(escrow).close();
     }
 
     function currentEpoch() public view returns (uint256) {
