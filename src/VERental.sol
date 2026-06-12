@@ -48,10 +48,7 @@ contract VERental is IVERental, BaseTransfer, Ownable, ReentrancyGuard {
         expiryEpoch = (block.timestamp + _duration) / WEEK;
         rewardsCommission = _rewardsCommission;
 
-        require(
-            _rewardsCommission <= MAX_REWARDS_COMMISSION,
-            "Commission must be at most 1%"
-        );
+        require(_rewardsCommission <= MAX_REWARDS_COMMISSION);
 
         escrow = address(new VERentalEscrow(_paymentToken, _veNFT));
         _transferOwnership(_seller);
@@ -132,17 +129,19 @@ contract VERental is IVERental, BaseTransfer, Ownable, ReentrancyGuard {
         if (msg.sender != seller && msg.sender != owner())
             revert UnallowedOperation();
 
+        uint256 nowEpoch = currentEpoch();
+        if (nowEpoch < expiryEpoch) revert StillRunning();
+
         // Claim rewards if not yet reaped
         if (!isReaped) {
             IVERentalEscrow(escrow).claim();
             isReaped = true;
+            emit Reaped();
         }
-
-        uint256 nowEpoch = currentEpoch();
-        if (nowEpoch < expiryEpoch) revert StillRunning();
 
         if (currentStatus != Status.Expired) {
             currentStatus = Status.Expired;
+            emit StatusChange(currentStatus, block.timestamp);
         }
 
         IVERentalEscrow(escrow).close();
@@ -157,6 +156,7 @@ contract VERental is IVERental, BaseTransfer, Ownable, ReentrancyGuard {
 
         if (currentStatus != Status.Expired) {
             currentStatus = Status.Expired;
+            emit StatusChange(currentStatus, block.timestamp);
         }
 
         IVERentalEscrow(escrow).close();
