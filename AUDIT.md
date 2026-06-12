@@ -57,15 +57,65 @@ All identified vulnerabilities have been successfully remediated. The codebase h
 * **Impact:** Out-of-gas reversion, permanently bricking the `reap()` function.
 * **Remediation:** Implemented a strict upper bound in `_trackPools()`, limiting the `votedPools` array to a maximum of 20 pools (`require(votedPools.length < 20, "Max pools reached");`).
 
-### 7. Compiler Hygiene and Best Practices (Low)
-* **Description:** The `onERC721Received` function in `VERentalEscrow.sol` was incorrectly missing the `pure` state mutability modifier despite not reading or writing state. It also triggered unused parameter warnings for its required interface arguments.
-* **Impact:** Minor code quality issue and gas inefficiency. Unaddressed warnings can obscure more critical compiler errors in the future.
-* **Remediation:** Added the `pure` modifier to signal no side effects and commented out the unused parameter names to silence compiler warnings while maintaining interface compliance.
+	### 7. Compiler Hygiene and Best Practices (Low)
+	* **Description:** The `onERC721Received` function in `VERentalEscrow.sol` was incorrectly missing the `pure` state mutability modifier despite not reading or writing state. It also triggered unused parameter warnings for its required interface arguments.
+	* **Impact:** Minor code quality issue and gas inefficiency. Unaddressed warnings can obscure more critical compiler errors in the future.
+	* **Remediation:** Added the `pure` modifier to signal no side effects and commented out the unused parameter names to silence compiler warnings while maintaining interface compliance.
 
----
+	---
 
-## Conclusion
+	## Supplemental Findings (Pass 3)
 
-The `ve-rentals-contracts` suite has been significantly hardened after a thorough two-pass audit. The implemented fixes protect both buyers and sellers from grieving attacks, ensure accurate rent distribution, implement safe mathematical accounting for rewards, and secure the protocol against edge-case reverts and gas-limit exhaustion.
+	### 8. Permanent veNFT Lock / Griefing on Unrented Listings (Critical)
+	* **Description:** `VERentalEscrow` release functions (`_releaseMGN`, `_releaseBribeRewards`, `_releaseFeeRewards`) fetch the `buyer` address from `VERental` and attempt to transfer ERC20 tokens to it. If the rental is never bought, `buyer` remains `address(0)`. During `VERental.closeOutRental()`, `VERentalEscrow.claim()` is unconditionally called. The `_transferERC20` function in `BaseTransfer` strictly reverts if `to == address(0)` for any non-zero amount. Consequently, any unrented listing that accumulates passive rewards will revert during closure, permanently locking the seller's veNFT in the escrow.
+	* **Impact:** Any external actor can permanently lock an unrented veNFT by transferring a dust amount (1 wei) of MGN or any expected reward token to the escrow, intentionally triggering the `address(0)` revert.
+	* **Remediation:**
+	  1. Added a check in all `VERentalEscrow` release functions: `if (buyer == address(0))`, transfer all accumulated rewards directly to the `seller` instead, as they rightfully own the voting power if the listing was never bought.
+	  2. Reordered validations in `BaseTransfer._transferERC20` to early return if `amount == 0` *before* checking if `to == address(0)`.
 
-*Audit performed by Gemini 3.1 Pro.*
+	### 9. Incorrect Refund of Unpaid Rent (High)
+	* **Description:** In the previous audit pass, it was noted that `VERentalEscrow.close()` should send any remaining unpaid rent (`trackedPTBalance`) to the seller instead of the buyer. However, the code still read `_transferERC20(paymentToken, buyer, trackedPTBalance);`. If a buyer rents the veNFT but intentionally abstains from voting for the majority of the epochs, the rent is not deducted. Upon closure, the buyer is fully refunded for the unused epochs, while the seller's veNFT remains locked without compensation.
+	* **Impact:** Buyers can maliciously or negligently lock a seller's veNFT for extended periods without fully compensating them, resulting in significant loss of rental yield.
+	* **Remediation:** Corrected the destination address in `VERentalEscrow.close()` to `seller`, ensuring the seller rightfully receives the full upfront payment for the entire duration their veNFT is locked.
+
+	### 10. Premature `reap()` Bricking Future Rewards (Medium)
+	* **Description:** `VERental.reap()` sets `isReaped = true` and unconditionally changes the rental status to `Status.Expired`, preventing any further voting. Because `isReaped` is checked and required to be false for future claims, if the buyer calls `reap()` before the `expiryEpoch`, they permanently lock any additional rewards the veNFT might accrue between the time of reaping and the actual rental expiry. 
+	* **Impact:** Self-inflicted denial of service and permanent loss of future rewards by the buyer.
+	* **Remediation:** Added `if (nowEpoch < expiryEpoch) revert StillRunning();` inside `VERental.reap()` to restrict the function to only be executable once the active rental period has concluded.
+
+	---
+
+	## Final Verification Pass (Pass 4)
+
+	### 11. Malicious Bribe Permanent Lock & Gas Griefing (Critical)
+	* **Description:** If `closeOutRental()` is called, it conditionally executes `IVERentalEscrow(escrow).claim()`. The `claim()` function sequentially iterates over all historically voted pools to claim rewards and bribes. If any of the bribe contracts are malicious, broken, or paused, the internal `IVoter.claimBribes` will revert. Because this logic is executed within `closeOutRental()`, a single broken pool will cause the entire closure transaction to fail, permanently locking the seller's veNFT and any unclaimed rent.
+	* **Impact:** A buyer could intentionally vote for a malicious pool to permanently lock the seller's NFT, or it could happen accidentally if a legitimate pool breaks.
+	* **Remediation:** Added an `emergencyClose()` function to `VERental` that completely bypasses `claim()`. This function can only be called by the `seller` or `owner` and only after a 1-week grace period (`nowEpoch <= expiryEpoch + 1`). This provides the buyer a safe window to reap their rewards, but guarantees the seller can always forcefully retrieve their veNFT and upfront rent if the reward logic is bricked.
+
+	### 12. Fee-On-Transfer Token Underflow (High)
+	* **Description:** The escrow was designed to support fee-on-transfer payment tokens by logging the exact deposited amount (`balanceAfter - balanceBefore`). However, the `delegateVote` function deducted `rentDue = multiplier * IVERental(factory).price()`, which relies on the strict listed `price`. If the deposited amount was less than `multiplier * price` due to fees, `trackedPTBalance -= rentDue` would mathematically underflow during voting, permanently bricking the `delegateVote()` function.
+	* **Impact:** The buyer pays for the rental but is entirely prevented from voting, resulting in a loss of funds and utility.
+	* **Remediation:** Added a strict equality check in `VERental.buy()`: `require(deposited == multiplier * price, "Exact amount required")`. The protocol no longer natively absorbs fee-on-transfer deductions; buyers must either use non-reflationary tokens or cover the fee separately. 
+
+	### 13. Rebase Token Reward Underflow (High)
+	* **Description:** In the `VERentalEscrow` reward release functions, if the reward token was the same as the payment token, it mathematically deducted the unspent rent (`tokenBalance -= trackedPTBalance`) before distributing the remaining rewards to the buyer. If the payment/reward token is a negative-rebase token (e.g. elastic supply token) and its balance naturally shrinks below `trackedPTBalance` over time, this subtraction would underflow and permanently brick `claim()`, locking the veNFT.
+	* **Impact:** Bricked `reap()` and `closeOutRental()` transactions leading to permanently locked assets.
+	* **Remediation:** Updated all release functions to prevent underflow: `tokenBalance = tokenBalance > trackedPTBalance ? tokenBalance - trackedPTBalance : 0;`. 
+
+	### 14. Array Length Mismatch in `createRentals` (Medium)
+	* **Description:** The batch listing function `VERentalMarketplace.createRentals` checks that all parameter arrays match in length, except for `rewardsCommissions`.
+	* **Impact:** If `rewardsCommissions` was shorter than the other arrays, the transaction would revert with an out-of-bounds error. If longer, the excess parameters would be ignored silently.
+	* **Remediation:** Added `durations.length == rewardsCommissions.length` to the `require` statement.
+
+	### 15. Smart Contract Seller Permanent Lock via `safeTransferFrom` (Medium)
+	* **Description:** In `VERentalEscrow.close()`, the escrow returns the veNFT to the seller using `safeTransferFrom`. If the seller is a smart contract that natively minted the veNFT or received it via standard `transferFrom`, but *does not* implement `onERC721Received`, the `close()` function will permanently revert.
+	* **Impact:** Unrecoverable veNFT for smart contract sellers without the explicit receiver hook.
+	* **Remediation:** Changed `safeTransferFrom` to the standard `transferFrom` when returning the veNFT in `close()`. Since the escrow already knows the seller successfully held the veNFT prior to the rental, bypassing the receiver hook check is definitively safer and prevents unexpected griefing.
+
+	---
+
+	## Final Conclusion
+
+	After four rigorous audit passes, all identified logical, economic, and systemic edge cases have been resolved. The `ve-rentals-contracts` suite is now heavily fortified against denial-of-service vectors, mathematical underflows, permanent asset locks, and griefing mechanisms. 
+
+	*Final Audit performed by Gemini 3.1 Pro.*

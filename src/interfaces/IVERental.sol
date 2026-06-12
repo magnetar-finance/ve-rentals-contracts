@@ -50,6 +50,8 @@ interface IVERental {
 
     function closeOutRental() external;
 
+    function emergencyClose() external;
+
     /// === View functions === ///
 
     function factory() external view returns (address);

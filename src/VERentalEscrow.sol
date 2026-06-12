@@ -58,7 +58,7 @@ contract VERentalEscrow is IVERentalEscrow, IERC721Receiver, BaseTransfer {
 
         uint256 buyEpoch = IVERental(factory).buyEpoch();
         uint256 multiplier = lastVoteEpoch == 0
-            ? (currentEpoch >= buyEpoch ? currentEpoch - buyEpoch + 1 : 1)
+            ? (currentEpoch >= buyEpoch ? (currentEpoch - buyEpoch) + 1 : 1)
             : currentEpoch - lastVoteEpoch;
         uint256 rentDue = multiplier * IVERental(factory).price();
 
@@ -89,14 +89,13 @@ contract VERentalEscrow is IVERentalEscrow, IERC721Receiver, BaseTransfer {
         require(!_isClosed, "Already closed");
 
         address seller = IVERental(factory).seller();
-        address buyer = IVERental(factory).buyer();
 
         if (trackedPTBalance > 0) {
-            _transferERC20(paymentToken, buyer, trackedPTBalance); // Send back remaining balance to buyer
+            _transferERC20(paymentToken, seller, trackedPTBalance); // Send back remaining balance to seller
             trackedPTBalance = 0;
         }
 
-        IVotingEscrow(IVERentalMarketplace(factory).ve()).safeTransferFrom(
+        IVotingEscrow(IVERentalMarketplace(factory).ve()).transferFrom(
             address(this),
             seller,
             tokenId
@@ -165,7 +164,9 @@ contract VERentalEscrow is IVERentalEscrow, IERC721Receiver, BaseTransfer {
         uint256 tokenBalance = IERC20(mgn).balanceOf(address(this));
         // Update token balance if reward token is payment token
         if (mgn == paymentToken) {
-            tokenBalance -= trackedPTBalance;
+            tokenBalance = tokenBalance > trackedPTBalance
+                ? tokenBalance - trackedPTBalance
+                : 0;
         }
 
         // Calculate seller's portion in reward
@@ -177,10 +178,15 @@ contract VERentalEscrow is IVERentalEscrow, IERC721Receiver, BaseTransfer {
 
         // Buyer
         address buyer = IVERental(factory).buyer();
-        // Send out reward
-        _transferERC20(mgn, buyer, tokenBalance - sellerPortion);
-        // Send out commission
-        _transferERC20(mgn, seller, sellerPortion);
+
+        if (buyer == address(0)) {
+            _transferERC20(mgn, seller, tokenBalance);
+        } else {
+            // Send out reward
+            _transferERC20(mgn, buyer, tokenBalance - sellerPortion);
+            // Send out commission
+            _transferERC20(mgn, seller, sellerPortion);
+        }
     }
 
     function _releaseBribeRewards() internal {
@@ -200,7 +206,9 @@ contract VERentalEscrow is IVERentalEscrow, IERC721Receiver, BaseTransfer {
                 uint256 tokenBalance = IERC20(reward).balanceOf(address(this));
                 // Update token balance if reward token is payment token
                 if (reward == paymentToken) {
-                    tokenBalance -= trackedPTBalance;
+                    tokenBalance = tokenBalance > trackedPTBalance
+                        ? tokenBalance - trackedPTBalance
+                        : 0;
                 }
                 // Calculate seller's portion in reward
                 uint256 sellerPortion = (sellerCommission * tokenBalance) /
@@ -211,10 +219,15 @@ contract VERentalEscrow is IVERentalEscrow, IERC721Receiver, BaseTransfer {
 
                 // Buyer
                 address buyer = IVERental(factory).buyer();
-                // Send out reward
-                _transferERC20(reward, buyer, tokenBalance - sellerPortion);
-                // Send out commission
-                _transferERC20(reward, seller, sellerPortion);
+
+                if (buyer == address(0)) {
+                    _transferERC20(reward, seller, tokenBalance);
+                } else {
+                    // Send out reward
+                    _transferERC20(reward, buyer, tokenBalance - sellerPortion);
+                    // Send out commission
+                    _transferERC20(reward, seller, sellerPortion);
+                }
             }
         }
     }
@@ -236,7 +249,9 @@ contract VERentalEscrow is IVERentalEscrow, IERC721Receiver, BaseTransfer {
                 uint256 tokenBalance = IERC20(reward).balanceOf(address(this));
                 // Update token balance if reward token is payment token
                 if (reward == paymentToken) {
-                    tokenBalance -= trackedPTBalance;
+                    tokenBalance = tokenBalance > trackedPTBalance
+                        ? tokenBalance - trackedPTBalance
+                        : 0;
                 }
                 // Calculate seller's portion in reward
                 uint256 sellerPortion = (sellerCommission * tokenBalance) /
@@ -247,10 +262,15 @@ contract VERentalEscrow is IVERentalEscrow, IERC721Receiver, BaseTransfer {
 
                 // Buyer
                 address buyer = IVERental(factory).buyer();
-                // Send out reward
-                _transferERC20(reward, buyer, tokenBalance - sellerPortion);
-                // Send out commission
-                _transferERC20(reward, seller, sellerPortion);
+
+                if (buyer == address(0)) {
+                    _transferERC20(reward, seller, tokenBalance);
+                } else {
+                    // Send out reward
+                    _transferERC20(reward, buyer, tokenBalance - sellerPortion);
+                    // Send out commission
+                    _transferERC20(reward, seller, sellerPortion);
+                }
             }
         }
     }

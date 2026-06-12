@@ -6,8 +6,9 @@ import {BaseTransfer} from "./base/BaseTransfer.sol";
 import {VERentalEscrow} from "./VERentalEscrow.sol";
 import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import {ReentrancyGuard} from "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
 
-contract VERental is IVERental, BaseTransfer, Ownable {
+contract VERental is IVERental, BaseTransfer, Ownable, ReentrancyGuard {
     address public factory;
     address public escrow;
     address public buyer;
@@ -36,7 +37,7 @@ contract VERental is IVERental, BaseTransfer, Ownable {
         uint256 _amount,
         uint256 _duration,
         uint256 _rewardsCommission
-    ) external {
+    ) external nonReentrant {
         if (factory != address(0)) revert AlreadyInitialized();
         factory = msg.sender;
         seller = _seller;
@@ -65,7 +66,7 @@ contract VERental is IVERental, BaseTransfer, Ownable {
         emit StatusChange(currentStatus, block.timestamp);
     }
 
-    function buy() external {
+    function buy() external nonReentrant {
         uint256 nowEpoch = currentEpoch();
 
         if (nowEpoch >= expiryEpoch) revert Expired();
@@ -83,9 +84,10 @@ contract VERental is IVERental, BaseTransfer, Ownable {
         );
         uint256 balanceAfter = IERC20(paymentToken).balanceOf(escrow);
 
-        IVERentalEscrow(escrow).increaseTrackedBalance(
-            balanceAfter - balanceBefore
-        );
+        uint256 deposited = balanceAfter - balanceBefore;
+        require(deposited == multiplier * price, "Exact amount required");
+
+        IVERentalEscrow(escrow).increaseTrackedBalance(deposited);
 
         buyEpoch = nowEpoch;
         buyer = msg.sender;
@@ -97,7 +99,7 @@ contract VERental is IVERental, BaseTransfer, Ownable {
     function vote(
         address[] calldata pools,
         uint256[] calldata weights
-    ) external {
+    ) external nonReentrant {
         if (msg.sender != buyer) revert OnlyBuyer();
         uint256 nowEpoch = currentEpoch();
 
@@ -108,9 +110,12 @@ contract VERental is IVERental, BaseTransfer, Ownable {
         lastVoteEpoch = currentEpoch();
     }
 
-    function reap() external {
+    function reap() external nonReentrant {
         if (msg.sender != buyer) revert OnlyBuyer();
         if (isReaped) revert AlreadyReaped();
+
+        uint256 nowEpoch = currentEpoch();
+        if (nowEpoch < expiryEpoch) revert StillRunning();
 
         IVERentalEscrow(escrow).claim();
         isReaped = true;
@@ -123,7 +128,7 @@ contract VERental is IVERental, BaseTransfer, Ownable {
         emit Reaped();
     }
 
-    function closeOutRental() external {
+    function closeOutRental() external nonReentrant {
         if (msg.sender != seller && msg.sender != owner())
             revert UnallowedOperation();
 
@@ -135,6 +140,20 @@ contract VERental is IVERental, BaseTransfer, Ownable {
 
         uint256 nowEpoch = currentEpoch();
         if (nowEpoch < expiryEpoch) revert StillRunning();
+
+        if (currentStatus != Status.Expired) {
+            currentStatus = Status.Expired;
+        }
+
+        IVERentalEscrow(escrow).close();
+    }
+
+    function emergencyClose() external {
+        if (msg.sender != seller && msg.sender != owner())
+            revert UnallowedOperation();
+
+        uint256 nowEpoch = currentEpoch();
+        if (nowEpoch <= expiryEpoch + 1) revert StillRunning();
 
         if (currentStatus != Status.Expired) {
             currentStatus = Status.Expired;

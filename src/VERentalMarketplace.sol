@@ -71,7 +71,8 @@ contract VERentalMarketplace is IVERentalMarketplace, BaseTransfer, Ownable {
         require(
             tokenIds.length == paymentTokens.length &&
                 paymentTokens.length == prices.length &&
-                prices.length == durations.length,
+                prices.length == durations.length &&
+                durations.length == rewardsCommissions.length,
             "LENGTHs"
         );
 
@@ -81,7 +82,7 @@ contract VERentalMarketplace is IVERentalMarketplace, BaseTransfer, Ownable {
             uint256 tokenId = tokenIds[i];
             address paymentToken = paymentTokens[i];
             uint256 price = prices[i];
-            uint256 duration = durations[i];            
+            uint256 duration = durations[i];
             uint256 rewardsCommission = rewardsCommissions[i];
 
             address rental = createRental(

@@ -15,10 +15,10 @@ abstract contract BaseTransfer {
         address to,
         uint256 amount
     ) internal {
+        if (amount == 0) return;
         if (tokenAddress == address(0)) revert ZeroAddress();
         if (to == address(0)) revert ZeroAddress();
         if (tokenAddress.code.length == 0) revert NotContract();
-        if (amount == 0) return;
 
         IERC20(tokenAddress).safeTransfer(to, amount);
     }
