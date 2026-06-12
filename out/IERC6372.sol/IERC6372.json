@@ -1,1 +1,247 @@
-{"abi":[{"type":"function","name":"CLOCK_MODE","inputs":[],"outputs":[{"name":"","type":"string","internalType":"string"}],"stateMutability":"view"},{"type":"function","name":"clock","inputs":[],"outputs":[{"name":"","type":"uint48","internalType":"uint48"}],"stateMutability":"view"}],"bytecode":{"object":"0x","sourceMap":"","linkReferences":{}},"deployedBytecode":{"object":"0x","sourceMap":"","linkReferences":{}},"methodIdentifiers":{"CLOCK_MODE()":"4bf5d7e9","clock()":"91ddadf4"},"rawMetadata":"{\"compiler\":{\"version\":\"0.8.28+commit.7893614a\"},\"language\":\"Solidity\",\"output\":{\"abi\":[{\"inputs\":[],\"name\":\"CLOCK_MODE\",\"outputs\":[{\"internalType\":\"string\",\"name\":\"\",\"type\":\"string\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"clock\",\"outputs\":[{\"internalType\":\"uint48\",\"name\":\"\",\"type\":\"uint48\"}],\"stateMutability\":\"view\",\"type\":\"function\"}],\"devdoc\":{\"kind\":\"dev\",\"methods\":{\"CLOCK_MODE()\":{\"details\":\"Description of the clock\"},\"clock()\":{\"details\":\"Clock used for flagging checkpoints. Can be overridden to implement timestamp based checkpoints (and voting).\"}},\"version\":1},\"userdoc\":{\"kind\":\"user\",\"methods\":{},\"version\":1}},\"settings\":{\"compilationTarget\":{\"lib/openzeppelin-contracts/contracts/interfaces/IERC6372.sol\":\"IERC6372\"},\"evmVersion\":\"prague\",\"libraries\":{},\"metadata\":{\"bytecodeHash\":\"ipfs\"},\"optimizer\":{\"enabled\":false,\"runs\":200},\"remappings\":[\":@openzeppelin/contracts/=lib/openzeppelin-contracts/contracts/\",\":erc4626-tests/=lib/openzeppelin-contracts/lib/erc4626-tests/\",\":forge-std/=lib/forge-std/src/\",\":halmos-cheatcodes/=lib/openzeppelin-contracts/lib/halmos-cheatcodes/src/\",\":openzeppelin-contracts/=lib/openzeppelin-contracts/\"]},\"sources\":{\"lib/openzeppelin-contracts/contracts/interfaces/IERC6372.sol\":{\"keccak256\":\"0xed0f7f14eb30c80a82855ddc3f7267bb6290546e5847a8ffc33f599ce4bc5eb6\",\"license\":\"MIT\",\"urls\":[\"bzz-raw://63fab00bbb42ce6f132a93d1c1e1cfed5175821521fb8746caa48129787d2435\",\"dweb:/ipfs/QmVMBNhmVW1h35LsaYNyDChfyTwF8M3EW9T1JDFpsXiaQF\"]}},\"version\":1}","metadata":{"compiler":{"version":"0.8.28+commit.7893614a"},"language":"Solidity","output":{"abi":[{"inputs":[],"stateMutability":"view","type":"function","name":"CLOCK_MODE","outputs":[{"internalType":"string","name":"","type":"string"}]},{"inputs":[],"stateMutability":"view","type":"function","name":"clock","outputs":[{"internalType":"uint48","name":"","type":"uint48"}]}],"devdoc":{"kind":"dev","methods":{"CLOCK_MODE()":{"details":"Description of the clock"},"clock()":{"details":"Clock used for flagging checkpoints. Can be overridden to implement timestamp based checkpoints (and voting)."}},"version":1},"userdoc":{"kind":"user","methods":{},"version":1}},"settings":{"remappings":["@openzeppelin/contracts/=lib/openzeppelin-contracts/contracts/","erc4626-tests/=lib/openzeppelin-contracts/lib/erc4626-tests/","forge-std/=lib/forge-std/src/","halmos-cheatcodes/=lib/openzeppelin-contracts/lib/halmos-cheatcodes/src/","openzeppelin-contracts/=lib/openzeppelin-contracts/"],"optimizer":{"enabled":false,"runs":200},"metadata":{"bytecodeHash":"ipfs"},"compilationTarget":{"lib/openzeppelin-contracts/contracts/interfaces/IERC6372.sol":"IERC6372"},"evmVersion":"prague","libraries":{}},"sources":{"lib/openzeppelin-contracts/contracts/interfaces/IERC6372.sol":{"keccak256":"0xed0f7f14eb30c80a82855ddc3f7267bb6290546e5847a8ffc33f599ce4bc5eb6","urls":["bzz-raw://63fab00bbb42ce6f132a93d1c1e1cfed5175821521fb8746caa48129787d2435","dweb:/ipfs/QmVMBNhmVW1h35LsaYNyDChfyTwF8M3EW9T1JDFpsXiaQF"],"license":"MIT"}},"version":1},"ast":{"absolutePath":"lib/openzeppelin-contracts/contracts/interfaces/IERC6372.sol","id":277,"exportedSymbols":{"IERC6372":[276]},"nodeType":"SourceUnit","src":"107:413:5","nodes":[{"id":263,"nodeType":"PragmaDirective","src":"107:25:5","nodes":[],"literals":["solidity",">=","0.4",".16"]},{"id":276,"nodeType":"ContractDefinition","src":"134:385:5","nodes":[{"id":269,"nodeType":"FunctionDefinition","src":"297:48:5","nodes":[],"documentation":{"id":264,"nodeType":"StructuredDocumentation","src":"159:133:5","text":" @dev Clock used for flagging checkpoints. Can be overridden to implement timestamp based checkpoints (and voting)."},"functionSelector":"91ddadf4","implemented":false,"kind":"function","modifiers":[],"name":"clock","nameLocation":"306:5:5","parameters":{"id":265,"nodeType":"ParameterList","parameters":[],"src":"311:2:5"},"returnParameters":{"id":268,"nodeType":"ParameterList","parameters":[{"constant":false,"id":267,"mutability":"mutable","name":"","nameLocation":"-1:-1:-1","nodeType":"VariableDeclaration","scope":269,"src":"337:6:5","stateVariable":false,"storageLocation":"default","typeDescriptions":{"typeIdentifier":"t_uint48","typeString":"uint48"},"typeName":{"id":266,"name":"uint48","nodeType":"ElementaryTypeName","src":"337:6:5","typeDescriptions":{"typeIdentifier":"t_uint48","typeString":"uint48"}},"visibility":"internal"}],"src":"336:8:5"},"scope":276,"stateMutability":"view","virtual":false,"visibility":"external"},{"id":275,"nodeType":"FunctionDefinition","src":"457:60:5","nodes":[],"documentation":{"id":270,"nodeType":"StructuredDocumentation","src":"351:48:5","text":" @dev Description of the clock"},"functionSelector":"4bf5d7e9","implemented":false,"kind":"function","modifiers":[],"name":"CLOCK_MODE","nameLocation":"466:10:5","parameters":{"id":271,"nodeType":"ParameterList","parameters":[],"src":"476:2:5"},"returnParameters":{"id":274,"nodeType":"ParameterList","parameters":[{"constant":false,"id":273,"mutability":"mutable","name":"","nameLocation":"-1:-1:-1","nodeType":"VariableDeclaration","scope":275,"src":"502:13:5","stateVariable":false,"storageLocation":"memory","typeDescriptions":{"typeIdentifier":"t_string_memory_ptr","typeString":"string"},"typeName":{"id":272,"name":"string","nodeType":"ElementaryTypeName","src":"502:6:5","typeDescriptions":{"typeIdentifier":"t_string_storage_ptr","typeString":"string"}},"visibility":"internal"}],"src":"501:15:5"},"scope":276,"stateMutability":"view","virtual":false,"visibility":"external"}],"abstract":false,"baseContracts":[],"canonicalName":"IERC6372","contractDependencies":[],"contractKind":"interface","fullyImplemented":false,"linearizedBaseContracts":[276],"name":"IERC6372","nameLocation":"144:8:5","scope":277,"usedErrors":[],"usedEvents":[]}],"license":"MIT"},"id":5}
+{
+  "abi": [
+    {
+      "type": "function",
+      "name": "CLOCK_MODE",
+      "inputs": [],
+      "outputs": [{ "name": "", "type": "string", "internalType": "string" }],
+      "stateMutability": "view"
+    },
+    {
+      "type": "function",
+      "name": "clock",
+      "inputs": [],
+      "outputs": [{ "name": "", "type": "uint48", "internalType": "uint48" }],
+      "stateMutability": "view"
+    }
+  ],
+  "bytecode": { "object": "0x", "sourceMap": "", "linkReferences": {} },
+  "deployedBytecode": { "object": "0x", "sourceMap": "", "linkReferences": {} },
+  "methodIdentifiers": { "CLOCK_MODE()": "4bf5d7e9", "clock()": "91ddadf4" },
+  "rawMetadata": "{\"compiler\":{\"version\":\"0.8.28+commit.7893614a\"},\"language\":\"Solidity\",\"output\":{\"abi\":[{\"inputs\":[],\"name\":\"CLOCK_MODE\",\"outputs\":[{\"internalType\":\"string\",\"name\":\"\",\"type\":\"string\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"clock\",\"outputs\":[{\"internalType\":\"uint48\",\"name\":\"\",\"type\":\"uint48\"}],\"stateMutability\":\"view\",\"type\":\"function\"}],\"devdoc\":{\"kind\":\"dev\",\"methods\":{\"CLOCK_MODE()\":{\"details\":\"Description of the clock\"},\"clock()\":{\"details\":\"Clock used for flagging checkpoints. Can be overridden to implement timestamp based checkpoints (and voting).\"}},\"version\":1},\"userdoc\":{\"kind\":\"user\",\"methods\":{},\"version\":1}},\"settings\":{\"compilationTarget\":{\"lib/openzeppelin-contracts/contracts/interfaces/IERC6372.sol\":\"IERC6372\"},\"evmVersion\":\"prague\",\"libraries\":{},\"metadata\":{\"bytecodeHash\":\"ipfs\"},\"optimizer\":{\"enabled\":false,\"runs\":200},\"remappings\":[\":@openzeppelin/contracts/=lib/openzeppelin-contracts/contracts/\",\":erc4626-tests/=lib/openzeppelin-contracts/lib/erc4626-tests/\",\":forge-std/=lib/forge-std/src/\",\":halmos-cheatcodes/=lib/openzeppelin-contracts/lib/halmos-cheatcodes/src/\",\":openzeppelin-contracts/=lib/openzeppelin-contracts/\"]},\"sources\":{\"lib/openzeppelin-contracts/contracts/interfaces/IERC6372.sol\":{\"keccak256\":\"0xed0f7f14eb30c80a82855ddc3f7267bb6290546e5847a8ffc33f599ce4bc5eb6\",\"license\":\"MIT\",\"urls\":[\"bzz-raw://63fab00bbb42ce6f132a93d1c1e1cfed5175821521fb8746caa48129787d2435\",\"dweb:/ipfs/QmVMBNhmVW1h35LsaYNyDChfyTwF8M3EW9T1JDFpsXiaQF\"]}},\"version\":1}",
+  "metadata": {
+    "compiler": { "version": "0.8.28+commit.7893614a" },
+    "language": "Solidity",
+    "output": {
+      "abi": [
+        {
+          "inputs": [],
+          "stateMutability": "view",
+          "type": "function",
+          "name": "CLOCK_MODE",
+          "outputs": [
+            { "internalType": "string", "name": "", "type": "string" }
+          ]
+        },
+        {
+          "inputs": [],
+          "stateMutability": "view",
+          "type": "function",
+          "name": "clock",
+          "outputs": [
+            { "internalType": "uint48", "name": "", "type": "uint48" }
+          ]
+        }
+      ],
+      "devdoc": {
+        "kind": "dev",
+        "methods": {
+          "CLOCK_MODE()": { "details": "Description of the clock" },
+          "clock()": {
+            "details": "Clock used for flagging checkpoints. Can be overridden to implement timestamp based checkpoints (and voting)."
+          }
+        },
+        "version": 1
+      },
+      "userdoc": { "kind": "user", "methods": {}, "version": 1 }
+    },
+    "settings": {
+      "remappings": [
+        "@openzeppelin/contracts/=lib/openzeppelin-contracts/contracts/",
+        "erc4626-tests/=lib/openzeppelin-contracts/lib/erc4626-tests/",
+        "forge-std/=lib/forge-std/src/",
+        "halmos-cheatcodes/=lib/openzeppelin-contracts/lib/halmos-cheatcodes/src/",
+        "openzeppelin-contracts/=lib/openzeppelin-contracts/"
+      ],
+      "optimizer": { "enabled": false, "runs": 200 },
+      "metadata": { "bytecodeHash": "ipfs" },
+      "compilationTarget": {
+        "lib/openzeppelin-contracts/contracts/interfaces/IERC6372.sol": "IERC6372"
+      },
+      "evmVersion": "prague",
+      "libraries": {}
+    },
+    "sources": {
+      "lib/openzeppelin-contracts/contracts/interfaces/IERC6372.sol": {
+        "keccak256": "0xed0f7f14eb30c80a82855ddc3f7267bb6290546e5847a8ffc33f599ce4bc5eb6",
+        "urls": [
+          "bzz-raw://63fab00bbb42ce6f132a93d1c1e1cfed5175821521fb8746caa48129787d2435",
+          "dweb:/ipfs/QmVMBNhmVW1h35LsaYNyDChfyTwF8M3EW9T1JDFpsXiaQF"
+        ],
+        "license": "MIT"
+      }
+    },
+    "version": 1
+  },
+  "ast": {
+    "absolutePath": "lib/openzeppelin-contracts/contracts/interfaces/IERC6372.sol",
+    "id": 277,
+    "exportedSymbols": { "IERC6372": [276] },
+    "nodeType": "SourceUnit",
+    "src": "107:413:5",
+    "nodes": [
+      {
+        "id": 263,
+        "nodeType": "PragmaDirective",
+        "src": "107:25:5",
+        "nodes": [],
+        "literals": ["solidity", ">=", "0.4", ".16"]
+      },
+      {
+        "id": 276,
+        "nodeType": "ContractDefinition",
+        "src": "134:385:5",
+        "nodes": [
+          {
+            "id": 269,
+            "nodeType": "FunctionDefinition",
+            "src": "297:48:5",
+            "nodes": [],
+            "documentation": {
+              "id": 264,
+              "nodeType": "StructuredDocumentation",
+              "src": "159:133:5",
+              "text": " @dev Clock used for flagging checkpoints. Can be overridden to implement timestamp based checkpoints (and voting)."
+            },
+            "functionSelector": "91ddadf4",
+            "implemented": false,
+            "kind": "function",
+            "modifiers": [],
+            "name": "clock",
+            "nameLocation": "306:5:5",
+            "parameters": {
+              "id": 265,
+              "nodeType": "ParameterList",
+              "parameters": [],
+              "src": "311:2:5"
+            },
+            "returnParameters": {
+              "id": 268,
+              "nodeType": "ParameterList",
+              "parameters": [
+                {
+                  "constant": false,
+                  "id": 267,
+                  "mutability": "mutable",
+                  "name": "",
+                  "nameLocation": "-1:-1:-1",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 269,
+                  "src": "337:6:5",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_uint48",
+                    "typeString": "uint48"
+                  },
+                  "typeName": {
+                    "id": 266,
+                    "name": "uint48",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "337:6:5",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_uint48",
+                      "typeString": "uint48"
+                    }
+                  },
+                  "visibility": "internal"
+                }
+              ],
+              "src": "336:8:5"
+            },
+            "scope": 276,
+            "stateMutability": "view",
+            "virtual": false,
+            "visibility": "external"
+          },
+          {
+            "id": 275,
+            "nodeType": "FunctionDefinition",
+            "src": "457:60:5",
+            "nodes": [],
+            "documentation": {
+              "id": 270,
+              "nodeType": "StructuredDocumentation",
+              "src": "351:48:5",
+              "text": " @dev Description of the clock"
+            },
+            "functionSelector": "4bf5d7e9",
+            "implemented": false,
+            "kind": "function",
+            "modifiers": [],
+            "name": "CLOCK_MODE",
+            "nameLocation": "466:10:5",
+            "parameters": {
+              "id": 271,
+              "nodeType": "ParameterList",
+              "parameters": [],
+              "src": "476:2:5"
+            },
+            "returnParameters": {
+              "id": 274,
+              "nodeType": "ParameterList",
+              "parameters": [
+                {
+                  "constant": false,
+                  "id": 273,
+                  "mutability": "mutable",
+                  "name": "",
+                  "nameLocation": "-1:-1:-1",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 275,
+                  "src": "502:13:5",
+                  "stateVariable": false,
+                  "storageLocation": "memory",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_string_memory_ptr",
+                    "typeString": "string"
+                  },
+                  "typeName": {
+                    "id": 272,
+                    "name": "string",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "502:6:5",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_string_storage_ptr",
+                      "typeString": "string"
+                    }
+                  },
+                  "visibility": "internal"
+                }
+              ],
+              "src": "501:15:5"
+            },
+            "scope": 276,
+            "stateMutability": "view",
+            "virtual": false,
+            "visibility": "external"
+          }
+        ],
+        "abstract": false,
+        "baseContracts": [],
+        "canonicalName": "IERC6372",
+        "contractDependencies": [],
+        "contractKind": "interface",
+        "fullyImplemented": false,
+        "linearizedBaseContracts": [276],
+        "name": "IERC6372",
+        "nameLocation": "144:8:5",
+        "scope": 277,
+        "usedErrors": [],
+        "usedEvents": []
+      }
+    ],
+    "license": "MIT"
+  },
+  "id": 5
+}
