@@ -13,6 +13,7 @@ import {BaseTransfer} from "./base/BaseTransfer.sol";
 contract VERentalEscrow is IVERentalEscrow, IERC721Receiver, BaseTransfer {
     address public paymentToken;
     address public factory;
+    address public marketplace;
 
     address[] public votedPools;
 
@@ -25,13 +26,14 @@ contract VERentalEscrow is IVERentalEscrow, IERC721Receiver, BaseTransfer {
 
     bool private _isClosed;
 
-    constructor(address _paymentToken, uint256 _tokenId) BaseTransfer() {
+    constructor(address _paymentToken, uint256 _tokenId, address _marketplace) BaseTransfer() {
         paymentToken = _paymentToken;
         tokenId = _tokenId;
         factory = msg.sender;
+        marketplace = _marketplace;
 
         voter = IVoter(
-            IVotingEscrow(IVERentalMarketplace(factory).ve()).voter()
+            IVotingEscrow(IVERentalMarketplace(marketplace).ve()).voter()
         );
 
         sellerCommission = IVERental(factory).rewardsCommission();
@@ -95,7 +97,7 @@ contract VERentalEscrow is IVERentalEscrow, IERC721Receiver, BaseTransfer {
             trackedPTBalance = 0;
         }
 
-        IVotingEscrow(IVERentalMarketplace(factory).ve()).transferFrom(
+        IVotingEscrow(IVERentalMarketplace(marketplace).ve()).transferFrom(
             address(this),
             seller,
             tokenId
@@ -159,7 +161,7 @@ contract VERentalEscrow is IVERentalEscrow, IERC721Receiver, BaseTransfer {
     }
 
     function _releaseMGN() internal {
-        address mgn = IVotingEscrow(IVERentalMarketplace(factory).ve()).token();
+        address mgn = IVotingEscrow(IVERentalMarketplace(marketplace).ve()).token();
         // Get balance
         uint256 tokenBalance = IERC20(mgn).balanceOf(address(this));
         // Update token balance if reward token is payment token

@@ -50,7 +50,7 @@ contract VERental is IVERental, BaseTransfer, Ownable, ReentrancyGuard {
 
         require(_rewardsCommission <= MAX_REWARDS_COMMISSION);
 
-        escrow = address(new VERentalEscrow(_paymentToken, _veNFT));
+        escrow = address(new VERentalEscrow(_paymentToken, _veNFT, factory));
         _transferOwnership(_seller);
         emit Initialize(
             _seller,
@@ -82,7 +82,7 @@ contract VERental is IVERental, BaseTransfer, Ownable, ReentrancyGuard {
         uint256 balanceAfter = IERC20(paymentToken).balanceOf(escrow);
 
         uint256 deposited = balanceAfter - balanceBefore;
-        require(deposited == multiplier * price, "Exact amount required");
+        require(deposited == multiplier * price);
 
         IVERentalEscrow(escrow).increaseTrackedBalance(deposited);
 
