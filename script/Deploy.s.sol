@@ -31,5 +31,6 @@ contract Deploy is Script {
     function initVe() public {
         _ve[4441] = address(0xF1B1c2f4E8FcD4aFCA0E608B1c7dB8b4e700154F);
         _ve[5042002] = address(0xF1B1c2f4E8FcD4aFCA0E608B1c7dB8b4e700154F);
+        _ve[267] = address(0xF1B1c2f4E8FcD4aFCA0E608B1c7dB8b4e700154F);
     }
 }
